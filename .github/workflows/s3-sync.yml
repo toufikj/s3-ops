@@ -1,0 +1,51 @@
+name: Bucket Sync [ Stage to Prod ] & Lambda Trigger
+
+on:
+  workflow_dispatch:
+
+  # workflow_run:
+  #   workflows:
+  #     - "Prod Automate Build-Push, Update-Task"
+  #   types:
+  #     - completed
+    
+jobs:
+  migrate-strapi:
+    name: Sync S3 Objects from Stage to Prod
+    runs-on: ubuntu-latest
+
+    env:
+      STAGE_S3_BUCKET: "stage-bucket"
+      PROD_S3_BUCKET: "prod-bucket"
+
+    steps:
+      # Step 1: Check Out Code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      # Step 4: Copy Assets from Stage to Prod
+      - name: Copy Assets from Stage to Prod
+        run: |
+          aws s3 sync s3://${{ env.STAGE_BUCKET }} s3://${{ env.PROD_BUCKET }} \
+            --acl public-read
+
+      # - name: Invoke Function Lambda
+      #   uses: gagoar/invoke-aws-lambda@master
+      #   with:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY  }}
+      #     REGION: ap-south-1
+      #     FunctionName: function_name
+      #     Payload: ''
+          # LogType: Tail
+          
+               
+
